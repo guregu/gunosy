@@ -100,19 +100,6 @@ func (c *client) Run() {
 				Name: c.user.Name,
 				Sesh: c.session,
 			})
-		case "make-game":
-			if c.match != nil {
-				c.error("already in match")
-				continue
-			}
-
-			r := newMatch(c.session, req.To)
-			r.register()
-			c.match = r
-			c.send(YouJoined{
-				X:    "you-make-game",
-				Chan: r.id,
-			})
 		case "join-game":
 			m := getMatch(req.To)
 			if m == nil {

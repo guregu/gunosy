@@ -17,7 +17,6 @@ type match struct {
 	users   map[sesh]*client
 	players map[sesh]*Player
 	readies map[sesh]bool
-	owner   sesh
 
 	join    chan joinReq
 	part    chan sesh
@@ -26,8 +25,8 @@ type match struct {
 	die     chan struct{}
 }
 
-func newMatch(owner sesh, name string) *match {
-	return &match{
+func NewMatch(name string) *match {
+	m := &match{
 		name:    name,
 		id:      generateID("m:"),
 		size:    4,
@@ -35,7 +34,6 @@ func newMatch(owner sesh, name string) *match {
 		users:   make(map[sesh]*client),
 		players: make(map[sesh]*Player),
 		readies: make(map[sesh]bool),
-		owner:   owner,
 
 		join:    make(chan joinReq),
 		part:    make(chan sesh),
@@ -43,6 +41,8 @@ func newMatch(owner sesh, name string) *match {
 		timeout: make(<-chan time.Time),
 		die:     make(chan struct{}),
 	}
+	m.register()
+	return m
 }
 
 func (m *match) register() {
@@ -66,6 +66,10 @@ func (m *match) unregister() {
 		panic("Deleting non-existent match: " + m.id)
 	}
 	delete(matches, m.id)
+}
+
+func (m match) String() string {
+	return m.name + " (" + m.id + ")"
 }
 
 func (m *match) run() {
@@ -141,13 +145,6 @@ func (m *match) goodbye(s sesh) bool {
 		Chan: m.id,
 		User: c.username(),
 	})
-	if s == m.owner && m.usercount() > 0 {
-		// set a new owner
-		for u, _ := range m.users {
-			m.owner = u
-			break
-		}
-	}
 	m.broadcast(m.info())
 	return true
 }
@@ -158,7 +155,6 @@ func (m *match) info() GameInfo {
 		ID:    m.id,
 		Name:  m.name,
 		Users: m.usernames(),
-		Owner: m.users[m.owner].username(),
 	}
 }
 

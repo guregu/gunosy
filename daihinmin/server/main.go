@@ -11,6 +11,9 @@ import (
 func main() {
 	bind := "localhost:3000"
 
+	// Create default game
+	m := dh.NewMatch("New Game 1")
+	log.Printf("Created the initial game: %s\n", m)
 	http.Handle("/ws", websocket.Handler(handle))
 
 	log.Println("running:", bind)
