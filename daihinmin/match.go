@@ -25,6 +25,11 @@ type match struct {
 	die     chan struct{}
 }
 
+type ExtInfo struct {
+	Id   string `json:"id"`
+	Name string `json:"name"`
+}
+
 func NewMatch(name string) *match {
 	m := &match{
 		name:    name,
@@ -43,6 +48,14 @@ func NewMatch(name string) *match {
 	}
 	m.register()
 	return m
+}
+
+func ListMatches() []ExtInfo {
+	ls := make([]ExtInfo, 0)
+	for _, m := range matches {
+		ls = append(ls, ExtInfo{m.id, m.name})
+	}
+	return ls
 }
 
 func (m *match) register() {
