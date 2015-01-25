@@ -14,6 +14,7 @@ type Game struct {
 }
 
 func (game *Game) HitTest(x, y float32) {
+	// カードの選択
 	for index := range game.cards {
 		sprite := game.cards[len(game.cards)-index-1]
 		if sprite.HitTest(x, y) {
@@ -24,7 +25,7 @@ func (game *Game) HitTest(x, y float32) {
 				sprite.Position.Y += 30
 			}
 
-			fmt.Printf("%c%d: %x\n", sprite.Suit, sprite.Rank, sprite.selected)
+			fmt.Printf("%c%d: %s\n", sprite.Suit, sprite.Rank, sprite.selected)
 			break
 		}
 	}
@@ -44,7 +45,7 @@ func (game *Game) Setup() {
 
 	for n := 1; n < 14; n++ {
 		card := daihinmin.Card{daihinmin.Spade, daihinmin.Rank(n)}
-		sprite := NewCardSprite(card, float32(150+30*n), 400)
+		sprite := NewCardSprite(card, float32(140+30*n), 420)
 		game.cards = append(game.cards, sprite)
 	}
 }
