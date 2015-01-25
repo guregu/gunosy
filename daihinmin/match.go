@@ -93,15 +93,27 @@ func (m *match) run() {
 		select {
 		case req := <-m.join:
 			// TODO reconnect voodoo
-			m.users[req.sesh] = req.from
-			m.broadcast(UserJoinPartReply{
-				X:    "user-join",
-				Chan: m.id,
-				User: req.from.username(),
-			})
-			m.broadcast(m.info())
+			var ok bool
+			if ok = m.size > m.usercount(); ok {
+				m.users[req.sesh] = req.from
+				m.broadcast(UserJoinPartReply{
+					X:    "user-join",
+					Chan: m.id,
+					User: req.from.username(),
+				})
+				m.broadcast(m.info())
+				if m.size == m.usercount() {
+					m.game.Start()
+					m.broadcast(GameInfo{
+						X:     "game-started",
+						ID:    m.id,
+						Name:  m.name,
+						Users: m.usernames(),
+					})
+				}
+			}
 			if req.result != nil {
-				req.result <- reqResult{ok: true}
+				req.result <- reqResult{ok: ok}
 			}
 		case s := <-m.part:
 			m.goodbye(s)
