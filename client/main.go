@@ -1,32 +1,71 @@
 package main
 
 import (
+	"fmt"
 	"github.com/aita/engi"
+	"github.com/gophergala/gunosy/daihinmin"
 )
 
 type Game struct {
 	*engi.Game
-	bot   engi.Drawable
 	batch *engi.Batch
-	font  *engi.Font
+	cards []*CardSprite
+	mouse bool
+}
+
+func (game *Game) HitTest(x, y float32) {
+	for index := range game.cards {
+		sprite := game.cards[len(game.cards)-index-1]
+		if sprite.HitTest(x, y) {
+			sprite.selected = !sprite.selected
+			if sprite.selected {
+				sprite.Position.Y -= 30
+			} else {
+				sprite.Position.Y += 30
+			}
+
+			fmt.Printf("%c%d: %x\n", sprite.Suit, sprite.Rank, sprite.selected)
+			break
+		}
+	}
 }
 
 func (game *Game) Preload() {
 	engi.Files.Add("gopher", "data/gopher_s.png")
+	engi.Files.Add("back", "data/cards/z02.png")
 	engi.Files.Add("font", "data/font.png")
+	game.loadCardImages()
 	game.batch = engi.NewBatch(engi.Width(), engi.Height())
 }
 
 func (game *Game) Setup() {
 	engi.SetBg(0x2d3739)
-	game.bot = engi.Files.Image("gopher")
-	game.font = engi.NewGridFont(engi.Files.Image("font"), 20, 20)
+	game.mouse = false
+
+	for n := 1; n < 14; n++ {
+		card := daihinmin.Card{daihinmin.Spade, daihinmin.Rank(n)}
+		sprite := NewCardSprite(card, float32(150+30*n), 400)
+		game.cards = append(game.cards, sprite)
+	}
+}
+
+func (game *Game) Mouse(x, y float32, action engi.Action) {
+	switch action {
+	case engi.PRESS:
+		game.mouse = true
+	case engi.RELEASE:
+		if game.mouse {
+			game.HitTest(x, y)
+		}
+		game.mouse = false
+	}
 }
 
 func (game *Game) Render() {
 	game.batch.Begin()
-	game.font.Print(game.batch, "GOPHER", 460, 190, 0xffffff)
-	game.batch.Draw(game.bot, 512, 320, 0.5, 0.5, 1, 1, 0, 0xffffff, 1)
+	for _, sprite := range game.cards {
+		sprite.Render(game.batch)
+	}
 	game.batch.End()
 }
 
