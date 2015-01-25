@@ -6,6 +6,17 @@ import (
 	"log"
 )
 
+type reqResult struct {
+	ok  bool
+	err string
+}
+
+type doReq struct {
+	sesh
+	name   string
+	result chan reqResult
+}
+
 func generateID(prefix string) string {
 	const size = 30
 	var b = make([]byte, size)
