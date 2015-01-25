@@ -201,9 +201,9 @@ func (m *match) doPlay(s sesh, cards Cards) (ok bool, hand Cards, events []Event
 }
 
 func (m *match) notifyNextTurn() {
-	current := m.game.Current
+	cnum := m.game.Current
 	for sesh, p := range m.players {
-		if p.Number == current {
+		if p.Number == cnum {
 			if c, ok := m.users[sesh]; ok {
 				c.send(YourTurn{
 					X:    "your-turn",
@@ -214,6 +214,16 @@ func (m *match) notifyNextTurn() {
 			}
 		}
 	}
+	stats := make([]int, m.size)
+	for _, p := range m.players {
+		stats[p.Number] = p.Hand.Len()
+	}
+	m.broadcast(GameStatus{
+		X:         "current-status",
+		CurrentID: m.game.Current,
+		Stats:     stats,
+		Pile:      m.game.Pile,
+	})
 }
 
 func (m *match) info() GameInfo {

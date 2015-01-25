@@ -38,6 +38,14 @@ type GameInfo struct {
 	Users []string
 }
 
+// The status of the current game which is public to all the players.
+type GameStatus struct {
+	X         `json:",omitempty"`
+	CurrentID int
+	Stats     []int
+	Pile
+}
+
 type YourTurn struct {
 	X    `json:",omitempty"`
 	ID   int
