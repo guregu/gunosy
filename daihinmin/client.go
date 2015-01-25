@@ -94,12 +94,6 @@ func (c *client) Run() {
 		log.Printf("Got: %s\n-> %s\n", req.Do, string(data))
 
 		switch req.Do {
-		case "login":
-			c.send(WelcomeReply{
-				X:    "welcome",
-				Name: c.user.Name,
-				Sesh: c.session,
-			})
 		case "join-game":
 			m := getMatch(req.To)
 			if m == nil {
