@@ -33,10 +33,9 @@ type ExtInfo struct {
 
 func NewMatch(name string) *match {
 	m := &match{
-		name: name,
-		id:   generateID("m:"),
-		// size:    4,
-		size:    1, // FIXME for debug
+		name:    name,
+		id:      generateID("m:"),
+		size:    4,
 		game:    NewGame(),
 		users:   make(map[sesh]*client),
 		players: make(map[sesh]*Player),
