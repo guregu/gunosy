@@ -101,7 +101,7 @@ func (c *client) Run() {
 				continue
 			}
 
-			result := make(chan reqResult)
+			result := make(chan joinResult)
 			j := joinReq{
 				sesh:     c.session,
 				from:     c,
@@ -113,8 +113,9 @@ func (c *client) Run() {
 			if r.ok {
 				c.match = m
 				c.send(YouJoined{
-					X:    "you-join-game",
-					Chan: m.id,
+					X:        "you-join-game",
+					PlayerID: r.playerId,
+					Chan:     m.id,
 				})
 			} else {
 				c.error(r.err)

@@ -98,6 +98,7 @@ func (m *match) run() {
 			// TODO reconnect voodoo
 			var ok bool
 			var err string
+			var playerId int
 			if ok = m.size > m.usercount(); ok {
 				m.users[req.sesh] = req.from
 				m.broadcast(UserJoinPartReply{
@@ -109,6 +110,7 @@ func (m *match) run() {
 				p := NewPlayer(req.from.username())
 				m.game.Join(p)
 				m.players[req.sesh] = p
+				playerId = p.Number
 				if m.size == m.usercount() {
 					m.game.Start()
 					m.broadcast(GameInfo{
@@ -123,7 +125,7 @@ func (m *match) run() {
 				err = "Exceed the limit size."
 			}
 			if req.result != nil {
-				req.result <- reqResult{ok: ok, err: err}
+				req.result <- joinResult{ok: ok, err: err, playerId: playerId}
 			}
 		case s := <-m.part:
 			m.goodbye(s)
@@ -206,10 +208,10 @@ func (m *match) notifyNextTurn() {
 		if p.Number == cnum {
 			if c, ok := m.users[sesh]; ok {
 				c.send(YourTurn{
-					X:    "your-turn",
-					ID:   p.Number,
-					Sesh: sesh,
-					Hand: p.Hand,
+					X:        "your-turn",
+					PlayerID: p.Number,
+					Sesh:     sesh,
+					Hand:     p.Hand,
 				})
 			}
 		}
@@ -219,10 +221,10 @@ func (m *match) notifyNextTurn() {
 		stats[p.Number] = p.Hand.Len()
 	}
 	m.broadcast(GameStatus{
-		X:         "current-status",
-		CurrentID: m.game.Current,
-		Stats:     stats,
-		Pile:      m.game.Pile,
+		X:             "current-status",
+		CurrentPlayer: m.game.Current,
+		Stats:         stats,
+		Pile:          m.game.Pile,
 	})
 }
 
@@ -258,7 +260,13 @@ type joinReq struct {
 	sesh
 	from     *client
 	password string
-	result   chan reqResult
+	result   chan joinResult
+}
+
+type joinResult struct {
+	ok       bool
+	err      string
+	playerId int
 }
 
 type matchReq struct {

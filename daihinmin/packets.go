@@ -16,7 +16,8 @@ type ErrorReply struct {
 
 type YouJoined struct {
 	X
-	Chan string
+	PlayerID int
+	Chan     string
 }
 
 type UserJoinPartReply struct {
@@ -40,15 +41,15 @@ type GameInfo struct {
 
 // The status of the current game which is public to all the players.
 type GameStatus struct {
-	X         `json:",omitempty"`
-	CurrentID int
-	Stats     []int
+	X             `json:",omitempty"`
+	CurrentPlayer int
+	Stats         []int
 	Pile
 }
 
 type YourTurn struct {
-	X    `json:",omitempty"`
-	ID   int
-	Sesh sesh
-	Hand Cards
+	X        `json:",omitempty"`
+	PlayerID int
+	Sesh     sesh
+	Hand     Cards
 }
