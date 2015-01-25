@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/gophergala/gunosy/daihinmin"
 	"errors"
 	"fmt"
+	"github.com/gophergala/gunosy/daihinmin"
 	"strconv"
 	"strings"
 )
@@ -13,7 +13,7 @@ func main() {
 	game.Join(daihinmin.NewPlayer("Alice"))
 	game.Join(daihinmin.NewPlayer("Bob"))
 	game.Join(daihinmin.NewPlayer("Charles"))
-	game.Join(daihinmin.NewPlayer("Dan"))
+	game.Join(daihinmin.NewPlayer("Daniel"))
 	game.Start()
 	printGame(*game)
 	fmt.Println()
