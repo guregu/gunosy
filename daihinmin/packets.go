@@ -25,10 +25,22 @@ type UserJoinPartReply struct {
 	User string
 }
 
+type PlayReply struct {
+	X
+	Events []Event
+	Hand   Cards
+}
+
 type GameInfo struct {
 	X     `json:",omitempty"`
 	ID    string
 	Name  string
 	Users []string
-	Owner string
+}
+
+type YourTurn struct {
+	X    `json:",omitempty"`
+	ID   int
+	Sesh sesh
+	Hand Cards
 }

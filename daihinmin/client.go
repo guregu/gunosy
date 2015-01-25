@@ -126,6 +126,29 @@ func (c *client) Run() {
 			}
 			c.match.part <- c.session
 			c.match = nil
+		case "play-cards":
+			if c.match == nil {
+				c.error("what match?")
+				continue
+			}
+			result := make(chan playResult)
+			p := playReq{
+				sesh:   c.session,
+				from:   c,
+				cards:  req.With,
+				result: result,
+			}
+			c.match.play <- p
+			r := <-result
+			if r.ok {
+				c.send(PlayReply{
+					X:      "played-successfully",
+					Events: r.events,
+					Hand:   r.hand,
+				})
+			} else {
+				c.error(r.err)
+			}
 		default:
 			log.Printf("Unknown req %s\n", req.Do)
 		}

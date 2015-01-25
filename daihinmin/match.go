@@ -21,6 +21,7 @@ type match struct {
 	join    chan joinReq
 	part    chan sesh
 	infoplz chan *client
+	play    chan playReq
 	timeout <-chan time.Time
 	die     chan struct{}
 }
@@ -32,9 +33,10 @@ type ExtInfo struct {
 
 func NewMatch(name string) *match {
 	m := &match{
-		name:    name,
-		id:      generateID("m:"),
-		size:    4,
+		name: name,
+		id:   generateID("m:"),
+		// size:    4,
+		size:    1, // FIXME for debug
 		game:    NewGame(),
 		users:   make(map[sesh]*client),
 		players: make(map[sesh]*Player),
@@ -42,6 +44,7 @@ func NewMatch(name string) *match {
 
 		join:    make(chan joinReq),
 		part:    make(chan sesh),
+		play:    make(chan playReq),
 		infoplz: make(chan *client),
 		timeout: make(<-chan time.Time),
 		die:     make(chan struct{}),
@@ -103,7 +106,9 @@ func (m *match) run() {
 					User: req.from.username(),
 				})
 				m.broadcast(m.info())
-				m.game.Join(NewPlayer(req.from.username()))
+				p := NewPlayer(req.from.username())
+				m.game.Join(p)
+				m.players[req.sesh] = p
 				if m.size == m.usercount() {
 					m.game.Start()
 					m.broadcast(GameInfo{
@@ -112,6 +117,7 @@ func (m *match) run() {
 						Name:  m.name,
 						Users: m.usernames(),
 					})
+					m.notifyNextTurn()
 				}
 			} else {
 				err = "Exceed the limit size."
@@ -125,6 +131,12 @@ func (m *match) run() {
 			if m.usercount() == 0 {
 				return
 			}
+		case p := <-m.play:
+			ok, hand, events := m.doPlay(p.sesh, p.cards)
+			if p.result != nil {
+				p.result <- playResult{ok: ok, hand: hand, events: events}
+			}
+			m.notifyNextTurn()
 		case c := <-m.infoplz:
 			c.send(m.info())
 		case <-m.die:
@@ -178,6 +190,32 @@ func (m *match) goodbye(s sesh) bool {
 	return true
 }
 
+func (m *match) doPlay(s sesh, cards Cards) (ok bool, hand Cards, events []Event) {
+	p, ok := m.players[s]
+	if !ok {
+		return
+	}
+	ok, events = m.game.Play(p, cards)
+	hand = p.Hand
+	return
+}
+
+func (m *match) notifyNextTurn() {
+	current := m.game.Current
+	for sesh, p := range m.players {
+		if p.Number == current {
+			if c, ok := m.users[sesh]; ok {
+				c.send(YourTurn{
+					X:    "your-turn",
+					ID:   p.Number,
+					Sesh: sesh,
+					Hand: p.Hand,
+				})
+			}
+		}
+	}
+}
+
 func (m *match) info() GameInfo {
 	return GameInfo{
 		X:     "game-info",
@@ -218,4 +256,18 @@ type matchReq struct {
 	name     string
 	password string
 	result   chan *match
+}
+
+type playReq struct {
+	sesh
+	from   *client
+	cards  Cards
+	result chan playResult
+}
+
+type playResult struct {
+	ok     bool
+	err    string
+	hand   Cards
+	events []Event
 }
