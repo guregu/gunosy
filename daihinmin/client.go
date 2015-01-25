@@ -14,9 +14,9 @@ type sesh string
 type client struct {
 	session sesh
 	socket  *websocket.Conn
-	//	listening map[string]*channel
 
-	user *user
+	user  *user
+	match *match
 
 	sendq chan interface{}
 }
@@ -100,6 +100,51 @@ func (c *client) Run() {
 				Name: c.user.Name,
 				Sesh: c.session,
 			})
+		case "make-game":
+			if c.match != nil {
+				c.error("already in match")
+				continue
+			}
+
+			r := newMatch(c.session, req.To)
+			r.register()
+			c.match = r
+			c.send(YouJoined{
+				X:    "you-make-game",
+				Chan: r.id,
+			})
+		case "join-game":
+			m := getMatch(req.To)
+			if m == nil {
+				c.error("no such game")
+				continue
+			}
+
+			result := make(chan reqResult)
+			j := joinReq{
+				sesh:     c.session,
+				from:     c,
+				password: req.What,
+				result:   result,
+			}
+			m.join <- j
+			r := <-result
+			if r.ok {
+				c.match = m
+				c.send(YouJoined{
+					X:    "you-join-game",
+					Chan: m.id,
+				})
+			} else {
+				c.error(r.err)
+			}
+		case "part-game":
+			if c.match == nil {
+				c.error("what match?")
+				continue
+			}
+			c.match.part <- c.session
+			c.match = nil
 		default:
 			log.Printf("Unknown req %s\n", req.Do)
 		}
