@@ -94,6 +94,7 @@ func (m *match) run() {
 		case req := <-m.join:
 			// TODO reconnect voodoo
 			var ok bool
+			var err string
 			if ok = m.size > m.usercount(); ok {
 				m.users[req.sesh] = req.from
 				m.broadcast(UserJoinPartReply{
@@ -102,6 +103,7 @@ func (m *match) run() {
 					User: req.from.username(),
 				})
 				m.broadcast(m.info())
+				m.game.Join(NewPlayer(req.from.username()))
 				if m.size == m.usercount() {
 					m.game.Start()
 					m.broadcast(GameInfo{
@@ -111,9 +113,11 @@ func (m *match) run() {
 						Users: m.usernames(),
 					})
 				}
+			} else {
+				err = "Exceed the limit size."
 			}
 			if req.result != nil {
-				req.result <- reqResult{ok: ok}
+				req.result <- reqResult{ok: ok, err: err}
 			}
 		case s := <-m.part:
 			m.goodbye(s)
